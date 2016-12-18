@@ -1,0 +1,19 @@
+---
+driver:
+  name: vagrant
+
+provisioner:
+  name: chef_zero
+  cookbooks_path: ./cookbooks
+  environments_path: ./test/integration/environments
+
+platforms:
+  - name: centos-7.2
+
+suites:
+  - name: darwin_workstation
+    provisioner:
+      client_rb:
+        environment: darwin_workstation
+    run_list:
+      recipe[bedrock]

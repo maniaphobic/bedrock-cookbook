@@ -1,0 +1,149 @@
+#!/bin/bash
+# ________________________________________
+# Description: This script prepares a host to run services.
+
+# ________________________________________
+# Define functions
+
+# Determine the Chef Client package URL
+
+function determine_chef_package_url () {
+    base_url='https://packages.chef.io/files/stable/chef/12.13.37'
+    case `determine_platform_variant` in
+	'centos')
+	    url="${base_url}/el/7/chef-12.13.37-1.el7.x86_64.rpm";;
+	'el_capitan')
+	    url="${base_url}/mac_os_x/10.11/chef-12.13.37-1.dmg";;
+	'sierra')
+	    url="${base_url}/mac_os_x/10.11/chef-12.13.37-1.dmg";;
+	'yosemite')
+	    url="${base_url}/mac_os_x/10.10/chef-12.13.37-1.dmg";;
+	*)
+	    echo 'Unable to determine Chef Client URL' ; exit 1
+    esac
+    echo $url
+}
+
+# Determine the platform family
+
+function determine_platform_family () {
+    if test "$PLATFORM_FAMILY" = ''; then
+        case "`uname -s`" in
+            'Darwin') export PLATFORM_FAMILY='darwin';;
+            'Linux' ) export PLATFORM_FAMILY='linux';;
+            *) echo "Unsupported platform_family"; exit 1
+        esac
+    fi
+    echo $PLATFORM_FAMILY
+}
+
+# Determine the platform variant
+
+function determine_platform_variant () {
+    if test "$PLATFORM_VARIANT" = ''; then
+        case `determine_platform_family` in
+            'Darwin')
+                case `uname -r | cut -d. -f1` in
+                    '14') export PLATFORM_VARIANT='yosemite';;
+                    '15') export PLATFORM_VARIANT='el_capitan';;
+                    '16') export PLATFORM_VARIANT='sierra';;
+                    *   ) echo 'Unsupported Darwin variant' ; exit 1
+                esac
+                ;;
+            'Linux')
+                local lsb_release='/usr/bin/lsb_release'
+                local yum='/usr/bin/yum'
+                if test -x $lsb_release; then
+                    export PLATFORM_VARIANT=` 
+                      $lsb_release -d | 
+                        cut -d' ' -f2 | 
+                        cut -d' ' -f1 | 
+                        tr A-Z a-z 
+                    `
+                elif test -x $yum; then
+                    export PLATFORM_VARIANT='rhel'
+                else
+                    echo "Unsupported platform variant"; exit 1
+                fi;;
+            *) echo "Unsupported platform variant"; exit 1
+        esac
+    fi
+    echo $PLATFORM_VARIANT
+}
+
+# Install Darwin packages
+
+function install_darwin_packages () {
+    # Install Chef
+    if pkgutil --pkgs | egrep -q '^com.getchef.pkg.chef$'; then
+	local message='Chef Client package already installed'
+    else
+	pkg_path=`mktemp /tmp/chef,XXXXXX.dmg`
+	curl --output $pkg_path `determine_chef_package_url`
+	hdiutil attach $pkg_path
+	installer -pkg /Volumes/Chef\ Client/chef-*.pkg -target /
+	hdiutil detach /Volumes/Chef\ Client
+	rm -f $pkg_path
+	local message='Installed Chef Client package'
+    fi
+    echo "$message"
+}
+
+# Install packages
+
+function install_packages () {
+    case `determine_platform_family` in
+        'darwin') install_darwin_packages;;
+        'rhel'  ) install_rhel_packages;;
+    esac
+}
+
+# Install RHEL/CentOS packages
+
+function install_rhel_packages () {
+    if rpm --query chef 2>&1 /dev/null; then
+	local message='Chef Client package already installed'
+    else
+        rpm -hiv `determine_chef_package_url`
+	local message='Installed Chef Client package'
+    fi
+    echo "$message"
+}
+
+# Invoke chef-client
+
+function invoke_chef_client () {
+    local environment_name='_default'
+    if test "$1" != ''; then
+	environment_name="$1"
+    fi
+
+    local run_list='bedrock::default'
+    if test "$CHEF_RUN_LIST" != ''; then
+        run_list="$CHEF_RUN_LIST"
+    fi
+
+    (cd chef
+     chef-client \
+         --config ./.chef/client.rb \
+         --environment "$environment_name" \
+         --local-mode \
+         --log_level debug \
+         --logfile /tmp/chef-client.log \
+         --override-runlist "$run_list" \
+         ;
+    )
+}
+
+# Run the application
+
+function run () {
+    set -ex
+    install_packages
+    invoke_chef_client $*
+}
+
+# ________________________________________
+# Invoke the application
+
+run $*

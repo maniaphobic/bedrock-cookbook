@@ -1,0 +1,51 @@
+# ________________________________________
+# Description: rake task definition file
+
+# ________________________________________
+# Import required modules
+
+require 'fileutils'
+
+# ________________________________________
+# Define global variables
+
+bootstrap_environment_name = '_default'
+
+bootstrap_run_list = 'recipe[bootstrap::default]'
+
+ephemeral_files = %w(
+  Berksfile.lock
+)
+
+# ________________________________________
+# Task targets
+
+# Acquire required cookbooks
+
+task :acquire_cookbooks do
+  `berks install`
+  `berks vendor cookbooks`
+end
+
+# Delete ephemeral files
+
+task :clean do
+  FileUtils.rm(ephemeral_files)
+end
+
+# Invoke chef-client
+
+task :run_chef_client do
+  `chef-client
+     --environment '#{bootstrap_environment_name}'
+     --local-mode
+     --override-runlist '#{bootstrap_run_list}'
+  `
+end
+
+begin
+  require "kitchen/rake_tasks"
+  Kitchen::RakeTasks.new
+rescue LoadError
+  puts ">>>>> Kitchen gem not loaded, omitting tasks" unless ENV["CI"]
+end

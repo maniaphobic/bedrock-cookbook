@@ -1,0 +1,55 @@
+{
+  "name": "centos_server",
+  "description": "This environment bootstraps a CentOS server",
+  "cookbook_versions": {
+  },
+  "json_class": "Chef::Environment",
+  "chef_type": "environment",
+  "default_attributes": {
+    "authorization": {
+      "sudo": {
+        "groups": [ "wheel" ],
+        "include_sudoers_d": true,
+        "passwordless": false,
+	"users": []
+      }
+    },
+    "bedrock": {
+      "chef": {},
+      "packages": [
+	"emacs-nox",
+	"tar"
+      ]
+    }
+    "selinux": {
+      "state": "permissive"
+    },
+    "sshd": {
+      "sshd_config": {
+	"PermitRootLogin": "no"
+      }
+    },
+    "yum": {
+      "CentOS-7-EPEL": {
+        "baseurl": "https://mirrors.cat.pdx.edu/epel/7/x86_64/",
+	"description": "CentOS 7 EPEL",
+        "gpgcheck": false
+      },
+      "CentOS-7-Extras": {
+        "baseurl": "https://mirrors.cat.pdx.edu/centos/7.2.1511/extras/x86_64/",
+	"description": "CentOS 7 Extras",
+        "gpgcheck": false
+      },
+      "CentOS-7.2-Core": {
+        "baseurl": "https://mirrors.cat.pdx.edu/centos/7.2.1511/os/x86_64/",
+	"description": "CentOS 7.2 Core Software",
+        "gpgcheck": false
+      },
+      "CentOS-7.2-Updates": {
+        "baseurl": "https://mirrors.cat.pdx.edu/centos/7.2.1511/updates/x86_64/",
+	"description": "CentOS 7.2 Updates",
+        "gpgcheck": false
+      }
+    }
+  }
+}

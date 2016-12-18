@@ -1,0 +1,29 @@
+{
+  "chef_type": "environment",
+  "cookbook_versions": {
+  },
+  "default_attributes": {
+    "authorization": {
+      "sudo": {
+        "groups": [ "wheel" ],
+        "include_sudoers_d": true,
+        "passwordless": true,
+	"users": [ "vagrant" ]
+      }
+    },
+    "bedrock": {
+      "packages": [
+	"emacs-nox"
+      ]
+    }
+    "selinux": {
+      "state": "permissive"
+    },
+    "yum": {
+    }
+  },
+  "description": "This environment bootstraps a CentOS server",
+  "json_class": "Chef::Environment",
+  "name": "centos_server",
+  "override_attributes": {}  
+}

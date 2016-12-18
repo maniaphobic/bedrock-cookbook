@@ -1,0 +1,34 @@
+{
+  "name": "bedrock",
+  "description": "Bootstrap a host",
+  "long_description": "This cookbook bootstraps a host's software and configuration foundations (bedrock).",
+  "maintainer": "People",
+  "maintainer_email": "git@maniaphobic.org",
+  "license": "all_rights",
+  "platforms": {
+  },
+  "dependencies": {
+    "sshd": ">= 0.0.0",
+    "sudo": ">= 0.0.0",
+    "yum": ">= 0.0.0"
+  },
+  "recommendations": {
+  },
+  "suggestions": {
+  },
+  "conflicting": {
+  },
+  "providing": {
+  },
+  "replacing": {
+  },
+  "attributes": {
+  },
+  "groupings": {
+  },
+  "recipes": {
+  },
+  "version": "0.1.0",
+  "source_url": "",
+  "issues_url": ""
+}

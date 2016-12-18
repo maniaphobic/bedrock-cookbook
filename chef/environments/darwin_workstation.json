@@ -1,0 +1,41 @@
+{
+  "chef_type": "environment",
+  "cookbook_versions": {},
+  "default_attributes": {
+    "bedrock": {
+      "homebrew": {
+	"casks": {
+	  "alfred": {
+	    "action": "install"
+	  },
+	  "chefdk": {
+	    "action": "install"
+	  }
+	}
+      },
+      "packages": [
+	"ack",
+	"ctorrent",
+	"dnsmasq",
+	"emacs",
+	"git",
+	"git-review",
+	"graphviz",
+	"gnupg2",
+	"httpie",
+	"nmap",
+	"proxychains-ng",
+	"privoxy",
+	"tmux",
+	"wget"
+      ]
+    },
+    "sshd": {
+      "PermitRootLogin": "no"
+    }
+  },
+  "description": "This environment bootstraps a Darwin workstation",
+  "json_class": "Chef::Environment",
+  "name": "darwin_workstation",
+  "override_attributes": {}
+}

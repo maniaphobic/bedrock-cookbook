@@ -1,0 +1,25 @@
+# Define the cookbook source
+
+source 'https://supermarket.chef.io'
+
+# Define cookbooks
+#
+# The cookbook's options hash can contain any of the customary
+# cookbook options, augmented with :version to specify a version
+# constraint. :version defaults to "> 0".
+
+{
+  'bedrock'       => { path: './cookbooks/bedrock' },
+  'chef-client'   => {},
+  'selinux'       => {},
+  'sshd'          => {},
+  'sudo'          => {},
+  'users'         => {},
+  'yum'           => {}
+}.each do |cookbook_name, cookbook_options|
+  cookbook(
+    cookbook_name,
+    cookbook_options.fetch(:version, '> 0'),
+    cookbook_options
+  )
+end
