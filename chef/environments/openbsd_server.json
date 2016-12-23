@@ -1,0 +1,26 @@
+{
+    "chef_type": "environment",
+    "cookbook_versions": {},
+    "default_attributes": {
+	"bedrock": {
+	},
+	"packages": [
+	    "the_silver_searcher",
+	    "emacs",
+	    "git",
+	    "gnupg",
+	    "nmap",
+	    "privoxy",
+	    "tor",
+	    "wget"
+	]
+    },
+    "sshd": {
+	"PermitRootLogin": "no",
+	"package": "wget"
+    },
+    "description": "This environment bootstraps an OpenBSD server",
+    "json_class": "Chef::Environment",
+    "name": "openbsd_server",
+    "override_attributes": {}
+}

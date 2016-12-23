@@ -31,6 +31,7 @@ function determine_platform_family () {
         case "`uname -s`" in
             'Darwin') export PLATFORM_FAMILY='darwin';;
             'Linux' ) export PLATFORM_FAMILY='linux';;
+            '*BSD'  ) export PLATFORM_FAMILY='bsd';;
             *) echo "Unsupported platform_family"; exit 1
         esac
     fi
@@ -42,7 +43,7 @@ function determine_platform_family () {
 function determine_platform_variant () {
     if test "$PLATFORM_VARIANT" = ''; then
         case `determine_platform_family` in
-            'Darwin')
+            'darwin')
                 case `uname -r | cut -d. -f1` in
                     '14') export PLATFORM_VARIANT='yosemite';;
                     '15') export PLATFORM_VARIANT='el_capitan';;
@@ -50,7 +51,7 @@ function determine_platform_variant () {
                     *   ) echo 'Unsupported Darwin variant' ; exit 1
                 esac
                 ;;
-            'Linux')
+            'linux')
                 local lsb_release='/usr/bin/lsb_release'
                 local yum='/usr/bin/yum'
                 if test -x $lsb_release; then
@@ -63,8 +64,16 @@ function determine_platform_variant () {
                 elif test -x $yum; then
                     export PLATFORM_VARIANT='rhel'
                 else
-                    echo "Unsupported platform variant"; exit 1
+                    echo 'Unsupported Linux variant'; exit 1
                 fi;;
+            'bsd')
+		case `uname -s` in
+		    'OpenBSD')
+			export PLATFORM_VARIANT='openbsd' ;;
+		    *        )
+			echo 'Unsupported BSD variant'; exit 1
+		esac
+		;;
             *) echo "Unsupported platform variant"; exit 1
         esac
     fi
@@ -93,9 +102,24 @@ function install_darwin_packages () {
 
 function install_packages () {
     case `determine_platform_family` in
-        'darwin') install_darwin_packages;;
-        'rhel'  ) install_rhel_packages;;
+        'darwin') install_darwin_packages ;;
+        'bsd'   )
+	    case `determine_platform_variant` in
+		'openbsd') install_openbsd_packages ;;
+	    esac ;;
+        'rhel'  ) install_rhel_packages ;;
     esac
+}
+
+# Install OpenBSD packages
+
+function install_openbsd_packages () {
+    ruby_verspec=`pkg_info -Q 'ruby' | egrep '^ruby-2' | tail -n 1 | cut -d' ' -f1`
+    ruby_version=`echo $ruby_verspec | cut -d- -f2 | cut -c1-3 | tr -d .`
+    gem="/usr/local/bin/gem${ruby_version}"
+    pkg_add $ruby_verspec
+    ln -sf $gem /usr/local/bin/gem
+    gem install --no-document chef-dk
 }
 
 # Install RHEL/CentOS packages
@@ -123,13 +147,24 @@ function invoke_chef_client () {
         run_list="$CHEF_RUN_LIST"
     fi
 
+    log_dir='/var/log/chef'
+    log_path="${log_dir}/client.log"
+    mkdir -p $log_dir
+
+    for suffix in '' 23; do
+	for dir in /usr/local/bin /usr/bin; do
+	    path="${dir}/chef-client${suffix}"
+	    test -x $path && { chef_client=$path ; break; }
+	done
+    done
+
     (cd chef
-     chef-client \
+     $chef_client \
          --config ./.chef/client.rb \
          --environment "$environment_name" \
          --local-mode \
          --log_level debug \
-         --logfile /tmp/chef-client.log \
+         --logfile $log_path \
          --override-runlist "$run_list" \
          ;
     )
